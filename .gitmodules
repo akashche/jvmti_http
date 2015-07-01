@@ -1,0 +1,9 @@
+[submodule "cmake"]
+	path = cmake
+	url = https://github.com/staticlibs/cmake.git
+[submodule "deps/staticlib_utils"]
+	path = deps/staticlib_utils
+	url = https://github.com/staticlibs/staticlib_utils.git
+[submodule "deps/staticlib_httpserver"]
+	path = deps/staticlib_httpserver
+	url = https://github.com/staticlibs/staticlib_httpserver.git
