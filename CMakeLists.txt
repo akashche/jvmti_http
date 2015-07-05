@@ -19,17 +19,18 @@ staticlib_add_subdirectory ( deps staticlib_httpserver )
 
 # build steps
 file ( GLOB_RECURSE ${PROJECT_NAME}_SRC ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp )
-add_executable ( ${PROJECT_NAME} ${${PROJECT_NAME}_SRC} )
+add_library ( ${PROJECT_NAME} SHARED ${${PROJECT_NAME}_SRC} )
 target_include_directories ( ${PROJECT_NAME} BEFORE PRIVATE 
         ${CMAKE_CURRENT_LIST_DIR}/include 
         ${staticlib_utils_INCLUDES}
         ${staticlib_containers_INCLUDES}
         ${staticlib_httpserver_INCLUDES}
-)
+        /usr/lib/jvm/java-openjdk/include 
+        /usr/lib/jvm/java-openjdk/include/linux )
 target_link_libraries ( ${PROJECT_NAME} 
         staticlib_utils 
         staticlib_httpserver 
         pthread )
 target_compile_definitions ( ${PROJECT_NAME} PRIVATE 
         -DASIO_STANDALONE 
-        -DASIO_HAS_STD_CHRONO)
+        -DASIO_HAS_STD_CHRONO )
