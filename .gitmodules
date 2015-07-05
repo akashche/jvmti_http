@@ -7,3 +7,6 @@
 [submodule "deps/staticlib_httpserver"]
 	path = deps/staticlib_httpserver
 	url = https://github.com/staticlibs/staticlib_httpserver.git
+[submodule "deps/staticlib_containers"]
+	path = deps/staticlib_containers
+	url = https://github.com/staticlibs/staticlib_containers.git

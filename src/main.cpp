@@ -10,10 +10,9 @@
 #include <thread>
 #include <vector>
 #include <chrono>
-#include <atomic>
 
 #include "staticlib/utils.hpp"
-#include "staticlib/utils/ProducerConsumerQueue.hpp"
+#include "staticlib/containers.hpp"
 
 #include "pion/http/streaming_server.hpp"
 #include "pion/tcp/connection.hpp"
@@ -25,31 +24,24 @@ namespace { // anonymous
 
 const uint16_t TCP_PORT = 8080;
 namespace su = staticlib::utils;
-
+namespace sc = staticlib::containers;
 
 } // namespace
 
 int main() {
-    // init data and queue
-    std::atomic_flag running = ATOMIC_FLAG_INIT;
-    running.test_and_set();
-    su::ProducerConsumerQueue<pion::http::response_writer_ptr> queue{10};
+    sc::blocking_queue<pion::http::response_writer_ptr> queue{1 << 10};
     // start worker thread
-    std::thread worker{[&] {
-        pion::http::response_writer_ptr writer{};
-        while(running.test_and_set()) {
-            bool success = queue.read(writer);
-            if (success) {
-                writer << "---\n";
-                writer << "Hi from worker" << "\n";
-                writer << "---\n";
-                // sending response to client
-                writer->send();
-            }
-            std::this_thread::sleep_for(std::chrono::seconds{1});
+    std::thread worker([&] {
+        for (;;) {
+            auto writer = queue.take();
+            writer << "---\n";
+            writer << "Hi from worker" << "\n";
+            writer << "---\n";
+            // sending response to client
+            writer->send();
         }
-        std::cout << "worker exited" << std::endl;
-    }};
+    });
+    worker.detach();
     
     // start server
     PION_LOG_SETLEVEL_WARN(PION_GET_LOGGER("pion"));
@@ -59,16 +51,14 @@ int main() {
         auto finfun = std::bind(&pion::tcp::connection::finish, conn);
         auto writer = pion::http::response_writer::create(conn, *req, finfun);
         // reroute to worker
-        queue.write(writer);
+        queue.emplace(std::move(writer));
     });
     server.start();
     // wait for Ctrl+c
     su::initialize_signals();
     su::wait_for_signal();
     // stop server
-    running.clear();
-    worker.join();
-    server.stop(true);
+    server.stop();
     return 0;
 }
 

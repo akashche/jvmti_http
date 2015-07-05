@@ -14,6 +14,7 @@ include ( ${CMAKE_CURRENT_LIST_DIR}/cmake/staticlibs_common.cmake )
 # dependencies
 
 staticlib_add_subdirectory ( deps staticlib_utils )
+staticlib_add_subdirectory ( deps staticlib_containers )
 staticlib_add_subdirectory ( deps staticlib_httpserver )
 
 # build steps
@@ -22,6 +23,7 @@ add_executable ( ${PROJECT_NAME} ${${PROJECT_NAME}_SRC} )
 target_include_directories ( ${PROJECT_NAME} BEFORE PRIVATE 
         ${CMAKE_CURRENT_LIST_DIR}/include 
         ${staticlib_utils_INCLUDES}
+        ${staticlib_containers_INCLUDES}
         ${staticlib_httpserver_INCLUDES}
 )
 target_link_libraries ( ${PROJECT_NAME} 
