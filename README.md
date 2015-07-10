@@ -14,7 +14,7 @@ Build and run steps (was tested on Fedora 22):
     cd build
     cmake ..
     make
-    javac -d . ../test/App.java && java -agentpath:`pwd`/lib/libjvmti_http.so App
+    javac -d . ../test/App.java && java -agentpath:`pwd`/lib/libjvmti_http.so=8080 App
 
 HTTP server will be started on port 8080 and will return value of the system property name
 specified in URL, examples:

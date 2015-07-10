@@ -15,6 +15,7 @@ include ( ${CMAKE_CURRENT_LIST_DIR}/cmake/staticlibs_common.cmake )
 
 staticlib_add_subdirectory ( deps staticlib_utils )
 staticlib_add_subdirectory ( deps staticlib_containers )
+SET ( STATICLIB_PION_DISABLE_LOGGING ON CACHE BOOL "")
 staticlib_add_subdirectory ( deps staticlib_httpserver )
 
 # build steps
