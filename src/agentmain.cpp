@@ -16,6 +16,7 @@
 #include "staticlib/utils.hpp"
 
 #include "HttpServer.hpp"
+#include "JvmtiAccessor.hpp"
 
 namespace { // anonymous
 
@@ -43,8 +44,8 @@ static void JNICALL vm_init(jvmtiEnv *jvmti, JNIEnv *env, jthread /* thread */) 
     jvmti->RunAgentThread(alloc_thread(env), jvmti_http::HttpServer::jvmti_callback, server, JVMTI_THREAD_NORM_PRIORITY);
 }
 
-void init_jvmti(JavaVM *jvm) {
-    jvmtiEnv * jvmti;
+jvmtiEnv* init_jvmti(JavaVM *jvm) {
+    jvmtiEnv* jvmti;
     jvm->GetEnv((void **) &jvmti, JVMTI_VERSION);
     jvmtiCapabilities caps;
     memset(&caps, 0, sizeof (caps));
@@ -63,6 +64,10 @@ void init_jvmti(JavaVM *jvm) {
         std::cout << "Capabilities error: " << errbuf << std::endl;
         jvmti->Deallocate(reinterpret_cast<unsigned char*> (errbuf));
     }
+    return jvmti;
+}
+
+void add_jvmti_callback(jvmtiEnv* jvmti) {
     // worker callback
     jvmtiEventCallbacks callbacks;
     memset(&callbacks, 0, sizeof (callbacks));
@@ -86,9 +91,11 @@ uint16_t parse_port(char* options) {
 } // namespace
 
 JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* jvm, char* options, void* /* reserved */) {
+    jvmtiEnv * jvmti = init_jvmti(jvm);
     uint16_t port = parse_port(options);
-    server = new jvmti_http::HttpServer{port};
-    init_jvmti(jvm);
+    auto ja = new jvmti_http::JvmtiAccessor(jvmti);
+    server = new jvmti_http::HttpServer{port, ja};
+    add_jvmti_callback(jvmti);
     std::cout << "Agent HTTP server started on port: [" << port << "]" << std::endl;
     return JNI_OK;
 }
