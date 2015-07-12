@@ -9,12 +9,15 @@
 #define	JVMTI_HTTP_HANDLERS_HPP
 
 #include <string>
+#include <stdexcept>
 #include <jvmti.h>
 
 #include "JvmtiHttpException.hpp"
 #include "staticlib/utils/tracemsg.hpp"
 
 std::string handle_GetSystemProperty(jvmtiEnv* jvmti, JNIEnv* jni, const std::string& input);
+
+std::string handle_GetStackTrace(jvmtiEnv* jvmti, JNIEnv* jni, const std::string& input);
 
 // utility functions
 

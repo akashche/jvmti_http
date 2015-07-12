@@ -19,6 +19,7 @@ namespace jvmti_http {
 
 JvmtiAccessor::JvmtiAccessor() {
     handlers.emplace("GetSystemProperty", handle_GetSystemProperty);
+    handlers.emplace("GetStackTrace", handle_GetStackTrace);
 }
 
 std::string JvmtiAccessor::process_query(jvmtiEnv* jvmti, JNIEnv* jni, const std::string& query) {
@@ -42,6 +43,4 @@ std::string JvmtiAccessor::process_query(jvmtiEnv* jvmti, JNIEnv* jni, const std
     }
 }
 
-
 } // namespace
-

@@ -5,9 +5,6 @@
  * Created on July 12, 2015, 6:41 PM
  */
 
-#include <stdexcept>
-#include <iostream>
-
 #include "handlers.hpp"
 
 std::string handle_GetSystemProperty(jvmtiEnv* jvmti, JNIEnv* /* jni */, const std::string& input) {
