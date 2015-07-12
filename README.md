@@ -9,7 +9,7 @@ Access to JVMTI is implemented using [handler functions](https://github.com/akas
 Each handler function takes an input string from HTTP URL and returns result string that is sent to client in HTTP response.
 Handler name is specified as a first part of the URL.
 
-Currently the following handlers are implemented;
+Currently the following handlers are implemented:
 
  * `/GetSystemProperty/<property_name>` - returns value for the specified system property using
  [GetSystemProperty](http://docs.oracle.com/javase/7/docs/platform/jvmti/jvmti.html#GetSystemProperty)
