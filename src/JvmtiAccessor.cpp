@@ -34,6 +34,7 @@
 namespace jvmti_http {
 
 JvmtiAccessor::JvmtiAccessor() {
+    // registered handlers map
     handlers.emplace("GetSystemProperty", handle_GetSystemProperty);
     handlers.emplace("GetStackTrace", handle_GetStackTrace);
 }

@@ -45,11 +45,11 @@ How to add new handlers
 
  * implement handler function with the following signature:
 
-    std::string handle_Something(jvmtiEnv* jvmti, JNIEnv* jni, const std::string& input);
+    `std::string handle_Something(jvmtiEnv* jvmti, JNIEnv* jni, const std::string& input);`
 
  * put this function into separate source file into [handlers directory](https://github.com/akashche/jvmti_http/tree/master/src/handlers)
 
- * add function declaration to [handlers header](https://github.com/akashche/jvmti_http/tree/master/src/handlers.hpp)
+ * add function declaration to [handlers header](https://github.com/akashche/jvmti_http/tree/master/src/handlers.hpp#L33)
 
  * add function pointer to the [handlers map in JvmtiAccessor class](https://github.com/akashche/jvmti_http/tree/master/src/JvmtiAccessor.cpp#L36)
 

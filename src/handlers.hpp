@@ -28,8 +28,9 @@
 #include <stdexcept>
 #include <jvmti.h>
 
-#include "JvmtiHttpException.hpp"
 #include "staticlib/utils/tracemsg.hpp"
+
+// handler functions
 
 std::string handle_GetSystemProperty(jvmtiEnv* jvmti, JNIEnv* jni, const std::string& input);
 
