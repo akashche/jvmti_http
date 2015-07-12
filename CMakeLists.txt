@@ -22,7 +22,7 @@ staticlib_add_subdirectory ( deps staticlib_httpserver )
 file ( GLOB_RECURSE ${PROJECT_NAME}_SRC ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp )
 add_library ( ${PROJECT_NAME} SHARED ${${PROJECT_NAME}_SRC} )
 target_include_directories ( ${PROJECT_NAME} BEFORE PRIVATE 
-        ${CMAKE_CURRENT_LIST_DIR}/include 
+        ${CMAKE_CURRENT_LIST_DIR}/src 
         ${staticlib_utils_INCLUDES}
         ${staticlib_containers_INCLUDES}
         ${staticlib_httpserver_INCLUDES}

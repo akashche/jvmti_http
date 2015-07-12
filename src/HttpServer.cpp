@@ -37,8 +37,8 @@ ja(ja) {
         // reroute to worker
         this->queue.emplace(std::move(writer), req->get_resource().substr(1));
     };
-    server.add_method_specific_resource("GET", "/", handler);
     try {
+        server.add_method_specific_resource("GET", "/", handler);
         server.start();
         running.test_and_set();
     } catch (const std::exception& e) {
@@ -64,8 +64,12 @@ void HttpServer::read_from_queue(jvmtiEnv* jvmti, JNIEnv* jni) {
         detail::Query el{};
         bool success = queue.take(el);
         if (success) {
-            auto resp = ja->process_query(jvmti, jni, el.get_property());
-            el.get_writer()->write_move(std::move(resp));
+            try {
+                auto resp = ja->process_query(jvmti, jni, el.get_property());
+                el.get_writer()->write_move(std::move(resp));
+            } catch (const std::exception& e) {
+                el.get_writer() << TRACEMSG(e.what()) << "\n";
+            }
             el.get_writer()->send();
         } else break;
     }
