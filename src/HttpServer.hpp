@@ -36,6 +36,7 @@
 
 #include "staticlib/containers/blocking_queue.hpp"
 
+#include "ZipResource.hpp"
 #include "JvmtiAccessor.hpp"
 
 namespace jvmti_http {
@@ -82,12 +83,13 @@ class HttpServer {
     staticlib::containers::blocking_queue<detail::Query> queue;
     std::atomic_flag running = ATOMIC_FLAG_INIT;
     std::unique_ptr<JvmtiAccessor> ja;
+    ZipResource webapp_resource;
     
 public:
     HttpServer(const HttpServer&) = delete;
     HttpServer& operator=(const HttpServer&) = delete;
     
-    HttpServer(uint16_t port, JvmtiAccessor* ja);
+    HttpServer(uint16_t port, JvmtiAccessor* ja, const std::string& webapp_zip_path="");
     
     static void JNICALL jvmti_callback(jvmtiEnv* jvmti, JNIEnv* jni, void* user_data);
     

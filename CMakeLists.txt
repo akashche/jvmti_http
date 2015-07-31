@@ -30,6 +30,8 @@ staticlib_add_subdirectory ( deps staticlib_utils )
 staticlib_add_subdirectory ( deps staticlib_containers )
 SET ( STATICLIB_PION_DISABLE_LOGGING ON CACHE BOOL "")
 staticlib_add_subdirectory ( deps staticlib_httpserver )
+# todo: consider supporting platform zlib
+staticlib_add_subdirectory ( deps external_zlib )
 
 # build steps
 file ( GLOB_RECURSE ${PROJECT_NAME}_SRC ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp )
@@ -39,11 +41,14 @@ target_include_directories ( ${PROJECT_NAME} BEFORE PRIVATE
         ${staticlib_utils_INCLUDES}
         ${staticlib_containers_INCLUDES}
         ${staticlib_httpserver_INCLUDES}
+        ${external_zlib_INCLUDES}
         /usr/lib/jvm/java-openjdk/include 
         /usr/lib/jvm/java-openjdk/include/linux )
 target_link_libraries ( ${PROJECT_NAME} 
         staticlib_utils 
-        staticlib_httpserver 
+        staticlib_httpserver
+        external_zlib
+        external_zlib_minizip
         pthread )
 target_compile_definitions ( ${PROJECT_NAME} PRIVATE 
         -DASIO_STANDALONE 

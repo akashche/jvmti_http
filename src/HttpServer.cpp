@@ -24,6 +24,7 @@
 #include <string>
 #include <atomic>
 #include <cstdlib>
+#include <functional>
 
 #include "pion/tcp/connection.hpp"
 #include "pion/http/request.hpp"
@@ -41,20 +42,27 @@ namespace ph = pion::http;
 
 const uint32_t NUMBER_OF_ASIO_THREADS = 1;
 const uint32_t QUEUE_MAX_SIZE = 1 << 20;
+const std::string HANDLERS_PATH = "/jvmti/";
+const std::string WEBAPP_PATH = "/webapp";
 
-HttpServer::HttpServer(uint16_t port, JvmtiAccessor* ja) :
+HttpServer::HttpServer(uint16_t port, JvmtiAccessor* ja, const std::string& webapp_zip_path) :
 server(1, port),
 queue(1 << 10),
-ja(ja) {
+ja(ja),
+// todo: fixme        
+webapp_resource(webapp_zip_path, WEBAPP_PATH) {
     auto handler = [this](ph::request_ptr& req, pion::tcp::connection_ptr& conn) {
         // pion specific response writer creation
         auto finfun = std::bind(&pion::tcp::connection::finish, conn);
         auto writer = ph::response_writer::create(conn, *req, finfun);
         // reroute to worker
-        this->queue.emplace(std::move(writer), req->get_resource().substr(1));
+        this->queue.emplace(std::move(writer), req->get_resource().substr(HANDLERS_PATH.length()));
     };
+    auto webapp_handler = std::bind(&ZipResource::handle, this->webapp_resource,
+            std::placeholders::_1, std::placeholders::_2);
     try {
-        server.add_method_specific_resource("GET", "/", handler);
+        server.add_method_specific_resource("GET", HANDLERS_PATH, handler);
+        server.add_method_specific_resource("GET", WEBAPP_PATH, webapp_handler);
         server.start();
         running.test_and_set();
     } catch (const std::exception& e) {

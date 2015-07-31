@@ -10,3 +10,6 @@
 [submodule "deps/staticlib_containers"]
 	path = deps/staticlib_containers
 	url = https://github.com/staticlibs/staticlib_containers.git
+[submodule "deps/external_zlib"]
+	path = deps/external_zlib
+	url = https://github.com/staticlibs/external_zlib
