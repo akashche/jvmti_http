@@ -13,11 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.util.Random;
 
 class App {
     public static void main(String[] args) throws Exception {
         System.out.println("Java app started and running...");
+        final Random ra = new Random(42);
         for(;;) {
+            for (int i = 0; i < 10; i++) {
+                new Thread(new Runnable() {
+                    public void run() {
+                        try {
+                            Thread.sleep((int) (ra.nextFloat() * 1000));
+                        } catch (InterruptedException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }
+                }).start();
+            }
             Thread.sleep(1000);
         }
     }

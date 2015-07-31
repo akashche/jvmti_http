@@ -36,6 +36,8 @@ std::string handle_GetSystemProperty(jvmtiEnv* jvmti, JNIEnv* jni, const std::st
 
 std::string handle_GetStackTrace(jvmtiEnv* jvmti, JNIEnv* jni, const std::string& input);
 
+std::string handle_GetLiveThreadsCount(jvmtiEnv* jvmti, JNIEnv* jni, const std::string& input);
+
 // utility functions
 
 std::string to_error_message(jvmtiEnv *jvmti, jvmtiError error);

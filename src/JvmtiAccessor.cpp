@@ -37,6 +37,7 @@ JvmtiAccessor::JvmtiAccessor() {
     // registered handlers map
     handlers.emplace("GetSystemProperty", handle_GetSystemProperty);
     handlers.emplace("GetStackTrace", handle_GetStackTrace);
+    handlers.emplace("GetLiveThreadsCount", handle_GetLiveThreadsCount);
 }
 
 std::string JvmtiAccessor::process_query(jvmtiEnv* jvmti, JNIEnv* jni, const std::string& query) {
