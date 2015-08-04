@@ -13,3 +13,6 @@
 [submodule "deps/external_zlib"]
 	path = deps/external_zlib
 	url = https://github.com/staticlibs/external_zlib
+[submodule "webapp"]
+	path = webapp
+	url = https://github.com/akashche/dynamic_bar_chart_example.git

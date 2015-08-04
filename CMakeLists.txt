@@ -53,3 +53,8 @@ target_link_libraries ( ${PROJECT_NAME}
 target_compile_definitions ( ${PROJECT_NAME} PRIVATE 
         -DASIO_STANDALONE 
         -DASIO_HAS_STD_CHRONO )
+
+# webapp target
+add_custom_target( webapp
+        COMMAND ${CMAKE_MAKE_PROGRAM} -f ${CMAKE_CURRENT_LIST_DIR}/webapp/Makefile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/webapp )

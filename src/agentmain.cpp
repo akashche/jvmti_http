@@ -37,10 +37,7 @@
 
 namespace { // anonymous
 
-const uint16_t DEFAULT_PORT = 8080;
-
 namespace su = staticlib::utils;
-namespace sc = staticlib::containers;
 namespace ph = pion::http;
 
 // http server
@@ -101,15 +98,13 @@ void add_jvmti_callback(jvmtiEnv* jvmti) {
     check_error(jvmti, errorev);
 }
 
-uint16_t parse_port(char* options) {
-    uint16_t port = DEFAULT_PORT;
-    if (nullptr != options) {
-        std::string optstr{options};
-        if (optstr.size() > 0) {
-            port = su::parse_uint16(optstr);
-        }
+size_t check_opts(const std::string& options) {
+    auto pos = options.find(',');
+    if (std::string::npos == pos || pos + 1 >= options.length()) {
+        throw jvmti_http::JvmtiHttpException(TRACEMSG(std::string{} + 
+            "Invalid agent options, must be =<port>,<webapp_zip_path>"));
     }
-    return port;
+    return pos;
 }
 
 } // namespace
@@ -117,10 +112,12 @@ uint16_t parse_port(char* options) {
 JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* jvm, char* options, void* /* reserved */) {
     try {
         jvmtiEnv * jvmti = init_jvmti(jvm);
-        uint16_t port = parse_port(options);
+        std::string optstr{options};
+        auto comma = check_opts(optstr);
+        uint16_t port = su::parse_uint16(optstr.substr(0, comma));
         // config parameters may be passed to accessor
         auto ja = new jvmti_http::JvmtiAccessor();
-        server = new jvmti_http::HttpServer{port, ja};
+        server = new jvmti_http::HttpServer{port, ja, optstr.substr(comma + 1)};
         add_jvmti_callback(jvmti);
         std::cout << "Agent HTTP server started on port: [" << port << "]" << std::endl;
         return JNI_OK;

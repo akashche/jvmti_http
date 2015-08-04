@@ -20,7 +20,7 @@ class App {
         System.out.println("Java app started and running...");
         final Random ra = new Random(42);
         for(;;) {
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 25; i++) {
                 new Thread(new Runnable() {
                     public void run() {
                         try {

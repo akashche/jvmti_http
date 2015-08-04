@@ -9,13 +9,15 @@ Access to JVMTI is implemented using [handler functions](https://github.com/akas
 Each handler function takes an input string from HTTP URL and returns result string that is sent to client in HTTP response.
 Handler name is specified as a first part of the URL.
 
-Currently the following handlers are implemented:
+The following handlers are implemented:
 
- * `/GetSystemProperty/<property_name>` - returns value for the specified system property using
+ * `/jvmti/GetSystemProperty/<property_name>` - returns value for the specified system property using
  [GetSystemProperty](http://docs.oracle.com/javase/7/docs/platform/jvmti/jvmti.html#GetSystemProperty)
 function
- * `/GetStackTrace/<thread_name>` - returns a stack trace for the specified thread using
+ * `/jvmti/GetStackTrace/<thread_name>` - returns a stack trace for the specified thread using
 [GetStackTrace](http://docs.oracle.com/javase/7/docs/platform/jvmti/jvmti.html#GetStackTrace) function
+ * `/jvmti/GetLiveThreadsCount/` - returns a number of live threads in JVM using 
+[GetAllThreads](http://docs.oracle.com/javase/7/docs/platform/jvmti/jvmti.html#GetAllThreads) function
 
 How to build and run
 --------------------
@@ -30,15 +32,25 @@ on any other platform supported by OpenJDK:
     cd build
     cmake ..
     make
-    javac -d . ../test/App.java && java -agentpath:`pwd`/lib/libjvmti_http.so=8080 App
+    make webapp
+    javac -d . ../test/App.java && java -agentpath:`pwd`/lib/libjvmti_http.so=8080,../webapp/build/webapp.zip App
 
 HTTP server will be started on the specified port (8080 in this example).
 
 Usage examples with cURL:
 
-    curl http://127.0.0.1:8080/GetSystemProperty/java.home
-    curl http://127.0.0.1:8080/GetSystemProperty/java.vm.version
-    curl http://127.0.0.1:8080/GetStackTrace/main
+    curl http://127.0.0.1:8080/jvmti/GetSystemProperty/java.home
+    curl http://127.0.0.1:8080/jvmti/GetSystemProperty/java.vm.version
+    curl http://127.0.0.1:8080/jvmti/GetStackTrace/main
+
+Web application example
+-----------------------
+
+[Example web app](https://github.com/akashche/dynamic_bar_chart_example) is included with this
+project as a git submodule. Web app is bundled into a ZIP file and web content is served using the
+same embedded HTTP server. Web app access:
+
+    [http://127.0.0.1:8080/webapp/index.html](http://127.0.0.1:8080/webapp/index.html)
 
 How to add new handlers
 -----------------------
