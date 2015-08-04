@@ -48,9 +48,9 @@ Web application example
 
 [Example web app](https://github.com/akashche/dynamic_bar_chart_example) is included with this
 project as a git submodule. Web app is bundled into a ZIP file and web content is served using the
-same embedded HTTP server. Web app access:
+same embedded HTTP server. Web app access [link](http://127.0.0.1:8080/webapp/index.html):
 
-    [http://127.0.0.1:8080/webapp/index.html](http://127.0.0.1:8080/webapp/index.html)
+    http://127.0.0.1:8080/webapp/index.html
 
 How to add new handlers
 -----------------------
@@ -77,6 +77,10 @@ This project is released under the [Apache License 2.0](http://www.apache.org/li
 
 Changelog
 ---------
+
+**2015-08-04**
+
+ * web app example added
 
 **2015-07-12**
 
