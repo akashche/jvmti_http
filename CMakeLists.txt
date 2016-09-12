@@ -27,7 +27,7 @@ include ( ${STATICLIB_CMAKE}/staticlibs_common.cmake )
 
 # options
 set ( JAVA_HOME "/usr/lib/jvm/java-openjdk" CACHE STRING "JDK directory" )
-#set ( staticlib_httpserver_DISABLE_LOGGING ON CACHE BOOL "Disable logging support in httpserver" )
+set ( staticlib_httpserver_DISABLE_LOGGING ON CACHE BOOL "Disable logging support in httpserver" )
 set ( staticlib_httpserver_USE_OPENSSL ON CACHE BOOL "Use OpenSSL lib for https" )
 
 # dependencies
