@@ -78,17 +78,18 @@ public:
 }
 
 class HttpServer {
-    staticlib::httpserver::http_server server;
-    staticlib::containers::blocking_queue<detail::Query> queue;
-    std::atomic_flag running = ATOMIC_FLAG_INIT;
     std::unique_ptr<JvmtiAccessor> ja;
+    staticlib::containers::blocking_queue<detail::Query> queue;    
+    staticlib::httpserver::http_server server;
     ZipResource webapp_resource;
+    std::atomic_flag running = ATOMIC_FLAG_INIT;
     
 public:
     HttpServer(const HttpServer&) = delete;
     HttpServer& operator=(const HttpServer&) = delete;
     
-    HttpServer(uint16_t port, JvmtiAccessor* ja, const std::string& webapp_zip_path="");
+    HttpServer(uint16_t port, JvmtiAccessor* ja, const std::string& webapp_zip_path,
+            const std::string& cert_path);
     
     static void JNICALL jvmti_callback(jvmtiEnv* jvmti, JNIEnv* jni, void* user_data);
     

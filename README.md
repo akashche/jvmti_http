@@ -33,24 +33,26 @@ on any other platform supported by OpenJDK:
     cmake ..
     make
     make webapp
-    javac -d . ../test/App.java && java -agentpath:`pwd`/bin/libjvmti_http.so=8080,../webapp/build/webapp.zip App
+    javac -d . ../test/App.java && java -agentpath:`pwd`/bin/libjvmti_http.so=8443,../webapp/build/ App
 
-HTTP server will be started on the specified port (8080 in this example).
+HTTP server will be started on the specified port (8443 in this example). In this example
+server uses self-signed HTTPS certificate. Example can be easily extended to use different server certificate
+or to require clients to use HTTPS-client certificates for authentication.
 
 Usage examples with cURL:
 
-    curl http://127.0.0.1:8080/jvmti/GetSystemProperty/java.home
-    curl http://127.0.0.1:8080/jvmti/GetSystemProperty/java.vm.version
-    curl http://127.0.0.1:8080/jvmti/GetStackTrace/main
+    curl -k https://127.0.0.1:8443/jvmti/GetSystemProperty/java.home
+    curl -k https://127.0.0.1:8443/jvmti/GetSystemProperty/java.vm.version
+    curl -k https://127.0.0.1:8443/jvmti/GetStackTrace/main
 
 Web application example
 -----------------------
 
 [Example web app](https://github.com/akashche/dynamic_bar_chart_example) is included with this
 project as a git submodule. Web app is bundled into a ZIP file and web content is served using the
-same embedded HTTP server. Web app access [link](http://127.0.0.1:8080/webapp/index.html):
+same embedded HTTP server. Web app access [link](https://127.0.0.1:8443/webapp/index.html):
 
-    http://127.0.0.1:8080/webapp/index.html
+    https://127.0.0.1:8443/webapp/index.html
 
 How to add new handlers
 -----------------------

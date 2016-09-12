@@ -21,11 +21,12 @@
  * Created on July 1, 2015, 1:44 PM
  */
 
-#include <string>
+#include <cstdint>
+#include <fstream>
 #include <iostream>
+#include <string>
 #include <thread>
 #include <vector>
-#include <cstdint>
 
 #include <jvmti.h>
 
@@ -41,7 +42,7 @@ namespace su = staticlib::utils;
 namespace sh = staticlib::httpserver;
 
 // http server
-jvmti_http::HttpServer* server;
+jvmti_http::HttpServer* GLOBAL_SERVER;
 
 void check_error(jvmtiEnv *jvmti, jvmtiError error) {
     if (JVMTI_ERROR_NONE != error) {
@@ -73,7 +74,7 @@ jthread alloc_thread(JNIEnv* env) {
 // required for worker init
 static void JNICALL vm_init(jvmtiEnv *jvmti, JNIEnv *env, jthread /* thread */) {
     auto th = alloc_thread(env);
-    auto error = jvmti->RunAgentThread(th, jvmti_http::HttpServer::jvmti_callback, server, JVMTI_THREAD_NORM_PRIORITY);
+    auto error = jvmti->RunAgentThread(th, jvmti_http::HttpServer::jvmti_callback, GLOBAL_SERVER, JVMTI_THREAD_NORM_PRIORITY);
     check_error(jvmti, error);
 }
 
@@ -102,9 +103,20 @@ size_t check_opts(const std::string& options) {
     auto pos = options.find(',');
     if (std::string::npos == pos || pos + 1 >= options.length()) {
         throw jvmti_http::JvmtiHttpException(TRACEMSG(std::string{} + 
-            "Invalid agent options, must be =<port>,<webapp_zip_path>"));
+            "Invalid agent options, must be =<port>,<webapp_path>"));
     }
     return pos;
+}
+
+void check_webapp_path(const std::string& webapp_zip_path, const std::string& cert_path) {
+    std::ifstream zip{webapp_zip_path};
+    if (!zip.good()) {
+        throw jvmti_http::JvmtiHttpException(TRACEMSG("Zip file not found: [" + webapp_zip_path + "]"));
+    }
+    std::ifstream cert{cert_path};
+    if (!cert.good()) {
+        throw jvmti_http::JvmtiHttpException(TRACEMSG("Server certificate not found: [" + cert_path + "]"));
+    }
 }
 
 } // namespace
@@ -117,7 +129,11 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* jvm, char* options, void* /* reserve
         uint16_t port = su::parse_uint16(optstr.substr(0, comma));
         // config parameters may be passed to accessor
         auto ja = new jvmti_http::JvmtiAccessor();
-        server = new jvmti_http::HttpServer{port, ja, optstr.substr(comma + 1)};
+        auto webapp_path = optstr.substr(comma + 1);
+        auto webapp_zip_path = webapp_path + "/webapp.zip";
+        auto cert_path = webapp_path + "/cert.pem";
+        check_webapp_path(webapp_zip_path, cert_path);
+        GLOBAL_SERVER = new jvmti_http::HttpServer(port, ja, webapp_zip_path, cert_path);
         add_jvmti_callback(jvmti);
         std::cout << "Agent HTTP server started on port: [" << port << "]" << std::endl;
         return JNI_OK;
@@ -128,7 +144,7 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* jvm, char* options, void* /* reserve
 }
 
 JNIEXPORT void JNICALL Agent_OnUnload(JavaVM* /* vm */) {
-    server->shutdown();
-    delete server;
+    GLOBAL_SERVER->shutdown();
+    delete GLOBAL_SERVER;
     std::cout << "Agent HTTP server stopped" << std::endl;
 }

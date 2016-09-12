@@ -25,6 +25,7 @@
 #include <string>
 #include <atomic>
 #include <functional>
+#include <fstream>
 #include <memory>
 
 #include "staticlib/config.hpp"
@@ -40,26 +41,29 @@ namespace sh = staticlib::httpserver;
 
 const uint32_t NUMBER_OF_ASIO_THREADS = 1;
 const uint32_t QUEUE_MAX_SIZE = 1 << 20;
-const std::string HANDLERS_PATH = "/jvmti/";
-const std::string WEBAPP_PATH = "/webapp/";
+const std::string HANDLERS_URL = "/jvmti/";
+const std::string WEBAPP_URL = "/webapp/";
 
-HttpServer::HttpServer(uint16_t port, JvmtiAccessor* ja, const std::string& webapp_zip_path) :
-server(1, port),
-queue(1 << 10),
+HttpServer::HttpServer(uint16_t port, JvmtiAccessor* ja, const std::string& webapp_zip_path,
+        const std::string& cert_path) :
 ja(ja),
-// todo: fixme        
-webapp_resource(webapp_zip_path, WEBAPP_PATH) {
+queue(1 << 10),
+server(2, port, asio::ip::address_v4::any(), cert_path),
+webapp_resource(webapp_zip_path, WEBAPP_URL) {
+
+    
     auto handler = [this](sh::http_request_ptr& req, sh::tcp_connection_ptr& conn) {
         // pion specific response writer creation
         auto writer = sh::http_response_writer::create(conn, req);
         // reroute to worker
-        this->queue.emplace(std::move(writer), req->get_resource().substr(HANDLERS_PATH.length()));
+        this->queue.emplace(std::move(writer), req->get_resource().substr(HANDLERS_URL.length()));
     };
-    auto webapp_handler = std::bind(&ZipResource::handle, this->webapp_resource,
-            std::placeholders::_1, std::placeholders::_2);
+    auto webapp_handler = [this](sh::http_request_ptr& req, sh::tcp_connection_ptr& conn) {
+        this->webapp_resource.handle(req, conn);
+    };
     try {
-        server.add_handler("GET", HANDLERS_PATH, handler);
-        server.add_handler("GET", WEBAPP_PATH, webapp_handler);
+        server.add_handler("GET", HANDLERS_URL, handler);
+        server.add_handler("GET", WEBAPP_URL, webapp_handler);
         server.start();
         running.test_and_set();
     } catch (const std::exception& e) {
