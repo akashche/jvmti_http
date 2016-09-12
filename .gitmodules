@@ -22,3 +22,12 @@
 [submodule "deps/staticlib_io"]
 	path = deps/staticlib_io
 	url = https://github.com/staticlibs/staticlib_io.git
+[submodule "deps/staticlib_endian"]
+	path = deps/staticlib_endian
+	url = https://github.com/staticlibs/staticlib_endian.git
+[submodule "deps/staticlib_pimpl"]
+	path = deps/staticlib_pimpl
+	url = https://github.com/staticlibs/staticlib_pimpl.git
+[submodule "deps/staticlib_unzip"]
+	path = deps/staticlib_unzip
+	url = https://github.com/staticlibs/staticlib_unzip.git

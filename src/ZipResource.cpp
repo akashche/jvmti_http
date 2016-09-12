@@ -24,15 +24,13 @@
 #include <string>
 #include <memory>
 #include <istream>
-#include <mutex>
 #include <array>
 #include <functional>
-
-#include "unzip.h"
 
 #include "staticlib/config.hpp"
 #include "staticlib/httpserver.hpp"
 #include "staticlib/io.hpp"
+#include "staticlib/unzip.hpp"
 #include "staticlib/utils.hpp"
 
 #include "JvmtiHttpException.hpp"
@@ -43,53 +41,17 @@ namespace jvmti_http {
 namespace sc = staticlib::config;
 namespace sh = staticlib::httpserver;
 namespace si = staticlib::io;
+namespace sz = staticlib::unzip;
 namespace su = staticlib::utils;
 
 namespace detail {
 
-std::string extract_path(const std::string& resource, const std::string& url_prefix) {
-    auto comres = resource.compare(0, url_prefix.length(), url_prefix);
-    if (0 == comres && resource.length() > url_prefix.length()) {
-        return resource.substr(url_prefix.length() + 1);
-    } else {
-        return resource;
-    }
-}
-
-class UnzipFileCloser {
-public:
-    void operator()(unzFile file) {
-        unzClose(file);
-    }
-};
-
-class UnzipEntry {
-    std::unique_ptr<void, UnzipFileCloser> src;
-
-public:
-    UnzipEntry(std::unique_ptr<void, UnzipFileCloser>&& src) :
-    src(std::move(src)) { }
-
-    std::streamsize read(char* s, std::streamsize n) {
-        auto uf = src.get();
-        auto res = unzReadCurrentFile(uf, s, n);
-        if (res > 0) {
-            return res;
-        } else if (0 == res) {
-            return std::char_traits<char>::eof();
-        } else {
-            throw JvmtiHttpException(TRACEMSG(
-                    "Resource read error, code: [" + sc::to_string(res) + "]"));
-        }
-    }
-};
 
 class ResponseStreamSender : public std::enable_shared_from_this<ResponseStreamSender> {
     sh::http_response_writer_ptr writer;
     std::unique_ptr<std::istream> st;
 
-    std::array<char, 8192> buf;
-    std::mutex mutex;
+    std::array<char, 4096> buf;
 
 public:
 
@@ -103,7 +65,6 @@ public:
     }
 
     void handle_write(const asio::error_code& ec, size_t /* bytes_written */) {
-        std::lock_guard<std::mutex> lock{mutex};
         if (!ec) {
             auto src = si::streambuf_source(st->rdbuf());
             size_t len = si::read_all(src, buf.data(), buf.size());
@@ -128,35 +89,40 @@ public:
 
 ZipResource::ZipResource(const std::string& file_path, const std::string& url_prefix) :
 file_path(file_path),
-url_prefix(url_prefix) { }
+url_prefix(url_prefix),
+idx(new sz::UnzipFileIndex(file_path)) { }
 
 void ZipResource::handle(sh::http_request_ptr& req, sh::tcp_connection_ptr& conn) {
-    auto writer = sh::http_response_writer::create(conn, req);
-    
-    auto path = detail::extract_path(req->get_resource(), url_prefix);
-
-    std::unique_ptr<void, detail::UnzipFileCloser> file{unzOpen(file_path.c_str()), detail::UnzipFileCloser{}};
-    if (!file.get()) throw JvmtiHttpException(TRACEMSG(std::string{} +
-            "Error opening zip file: [" + file_path + "]"));
-
-    auto found = unzLocateFile(file.get(), path.c_str(), 1);
-    if (UNZ_OK != found) {
-        writer->get_response().set_status_code(404);
-        writer->get_response().set_status_message("Not Found");
-        writer << "Not Found";
-        writer->send();
-        return;
+    auto resp = sh::http_response_writer::create(conn, req);
+    std::string url_path = std::string(req->get_resource(), url_prefix.length());
+    sz::FileEntry en = idx->find_zip_entry(url_path);
+    if (!en.is_empty()) {
+        auto stream_ptr = sz::open_zip_entry(*idx, url_path);
+        auto sender = std::make_shared<detail::ResponseStreamSender>(std::move(resp), std::move(stream_ptr));
+        // todo
+        //            set_resp_headers(url_path, resp->get_response());
+        sender->send();
+    } else {
+        resp->get_response().set_status_code(sh::http_request::RESPONSE_CODE_NOT_FOUND);
+        resp->get_response().set_status_message(sh::http_request::RESPONSE_MESSAGE_NOT_FOUND);
+        resp << sh::http_request::RESPONSE_CODE_NOT_FOUND << " "
+                << sh::http_request::RESPONSE_MESSAGE_NOT_FOUND << ":"
+                << " [" << url_path << "]\n";
+        resp->send();
     }
-    auto opened = unzOpenCurrentFile(file.get());
-    if (UNZ_OK != opened) {
-        throw JvmtiHttpException(TRACEMSG(std::string{} +
-                "Error opening resource: [" + path + "] zip file: [" + file_path + "]"));
-    }
-
-    // prepare input stream for sender ensuring lifetime for open zip entry
-    auto st = si::make_source_istream_ptr(detail::UnzipEntry(std::move(file)));
-    auto sender = std::make_shared<detail::ResponseStreamSender>(std::move(writer), std::move(st));
-    sender->send();
 }
+
+//    void set_resp_headers(const std::string& url_path, sh::http_response& resp) {
+//        std::string ct{"application/octet-stream"};
+//        for (const auto& mi : conf->mimeTypes) {
+//            if (su::ends_with(url_path, mi.extension)) {
+//                ct = mi.mime;
+//                break;
+//            }
+//        }
+//        resp.change_header("Content-Type", ct);
+//        // set caching
+//        resp.change_header("Cache-Control", "max-age=" + sc::to_string(conf->cacheMaxAgeSeconds) + ", public");
+//    }
 
 } // namespace

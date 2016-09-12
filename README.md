@@ -33,7 +33,7 @@ on any other platform supported by OpenJDK:
     cmake ..
     make
     make webapp
-    javac -d . ../test/App.java && java -agentpath:`pwd`/lib/libjvmti_http.so=8080,../webapp/build/webapp.zip App
+    javac -d . ../test/App.java && java -agentpath:`pwd`/bin/libjvmti_http.so=8080,../webapp/build/webapp.zip App
 
 HTTP server will be started on the specified port (8080 in this example).
 

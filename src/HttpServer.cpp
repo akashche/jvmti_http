@@ -21,10 +21,11 @@
  * Created on July 10, 2015, 7:23 PM
  */
 
+#include <cstdlib>
 #include <string>
 #include <atomic>
-#include <cstdlib>
 #include <functional>
+#include <memory>
 
 #include "staticlib/config.hpp"
 #include "staticlib/httpserver.hpp"
@@ -40,7 +41,7 @@ namespace sh = staticlib::httpserver;
 const uint32_t NUMBER_OF_ASIO_THREADS = 1;
 const uint32_t QUEUE_MAX_SIZE = 1 << 20;
 const std::string HANDLERS_PATH = "/jvmti/";
-const std::string WEBAPP_PATH = "/webapp";
+const std::string WEBAPP_PATH = "/webapp/";
 
 HttpServer::HttpServer(uint16_t port, JvmtiAccessor* ja, const std::string& webapp_zip_path) :
 server(1, port),
