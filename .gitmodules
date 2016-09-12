@@ -16,9 +16,6 @@
 [submodule "webapp"]
 	path = webapp
 	url = https://github.com/akashche/dynamic_bar_chart_example.git
-[submodule "deps/staticlib_jni"]
-	path = deps/staticlib_jni
-	url = https://github.com/staticlibs/staticlib_jni.git
 [submodule "deps/staticlib_config"]
 	path = deps/staticlib_config
 	url = https://github.com/staticlibs/staticlib_config.git
