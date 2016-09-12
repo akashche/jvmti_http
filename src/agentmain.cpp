@@ -38,7 +38,7 @@
 namespace { // anonymous
 
 namespace su = staticlib::utils;
-namespace ph = pion::http;
+namespace sh = staticlib::httpserver;
 
 // http server
 jvmti_http::HttpServer* server;

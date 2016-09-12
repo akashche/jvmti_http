@@ -24,14 +24,14 @@
 #ifndef JVMTIHTTPEXCEPTION_HPP
 #define	JVMTIHTTPEXCEPTION_HPP
 
-#include "staticlib/utils/BaseException.hpp"
+#include "staticlib/config/BaseException.hpp"
 
 namespace jvmti_http {
 
 /**
  * Module specific exception
  */
-class JvmtiHttpException : public staticlib::utils::BaseException {
+class JvmtiHttpException : public staticlib::config::BaseException {
 public:
     /**
      * Default constructor
@@ -44,7 +44,7 @@ public:
      * @param msg error message
      */
     JvmtiHttpException(const std::string& msg) :
-    staticlib::utils::BaseException(msg) { }
+    staticlib::config::BaseException(msg) { }
 
 };
 

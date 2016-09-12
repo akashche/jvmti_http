@@ -25,7 +25,7 @@
 
 #include <jvmti.h>
 
-#include "staticlib/utils/tracemsg.hpp"
+#include "staticlib/config/tracemsg.hpp"
 
 #include "handlers.hpp"
 #include "JvmtiHttpException.hpp"

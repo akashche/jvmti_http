@@ -31,10 +31,9 @@
 
 #include <jvmti.h>
 
-#include "pion/http/streaming_server.hpp"
-#include "pion/http/response_writer.hpp"
-
 #include "staticlib/containers/blocking_queue.hpp"
+#include "staticlib/httpserver/http_server.hpp"
+#include "staticlib/httpserver/http_response_writer.hpp"
 
 #include "ZipResource.hpp"
 #include "JvmtiAccessor.hpp"
@@ -44,7 +43,7 @@ namespace jvmti_http {
 namespace detail {
 
 class Query {
-    pion::http::response_writer_ptr writer;
+    staticlib::httpserver::http_response_writer_ptr writer;
     std::string property;
 
 public:
@@ -63,11 +62,11 @@ public:
 
     Query() { }
 
-    Query(pion::http::response_writer_ptr writer, std::string property) :
+    Query(staticlib::httpserver::http_response_writer_ptr writer, std::string property) :
     writer(std::move(writer)),
     property(std::move(property)) { }
 
-    pion::http::response_writer_ptr& get_writer() {
+    staticlib::httpserver::http_response_writer_ptr& get_writer() {
         return writer;
     }
 
@@ -79,7 +78,7 @@ public:
 }
 
 class HttpServer {
-    pion::http::streaming_server server;
+    staticlib::httpserver::http_server server;
     staticlib::containers::blocking_queue<detail::Query> queue;
     std::atomic_flag running = ATOMIC_FLAG_INIT;
     std::unique_ptr<JvmtiAccessor> ja;

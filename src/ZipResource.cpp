@@ -23,17 +23,16 @@
 
 #include <string>
 #include <memory>
-#include <streambuf>
+#include <istream>
 #include <mutex>
 #include <array>
 #include <functional>
 
 #include "unzip.h"
 
-#include "pion/tcp/connection.hpp"
-#include "pion/http/request.hpp"
-#include "pion/http/response_writer.hpp"
-
+#include "staticlib/config.hpp"
+#include "staticlib/httpserver.hpp"
+#include "staticlib/io.hpp"
 #include "staticlib/utils.hpp"
 
 #include "JvmtiHttpException.hpp"
@@ -41,8 +40,9 @@
 
 namespace jvmti_http {
 
-namespace ph = pion::http;
-namespace pt = pion::tcp;
+namespace sc = staticlib::config;
+namespace sh = staticlib::httpserver;
+namespace si = staticlib::io;
 namespace su = staticlib::utils;
 
 namespace detail {
@@ -78,28 +78,24 @@ public:
         } else if (0 == res) {
             return std::char_traits<char>::eof();
         } else {
-            throw JvmtiHttpException(TRACEMSG(std::string{} +
-                    "Resource read error, code: [" + su::to_string(res) + "]"));
+            throw JvmtiHttpException(TRACEMSG(
+                    "Resource read error, code: [" + sc::to_string(res) + "]"));
         }
     }
 };
 
 class ResponseStreamSender : public std::enable_shared_from_this<ResponseStreamSender> {
-    pion::http::writer_ptr writer;
-    std::unique_ptr<std::streambuf> streambuf;
-    // added here for lifetime only
-    std::unique_ptr<UnzipEntry> src;
+    sh::http_response_writer_ptr writer;
+    std::unique_ptr<std::istream> st;
 
     std::array<char, 8192> buf;
     std::mutex mutex;
 
 public:
 
-    ResponseStreamSender(pion::http::writer_ptr&& writer, std::unique_ptr<std::streambuf>&& streambuf,
-            std::unique_ptr<UnzipEntry>&& src) :
+    ResponseStreamSender(sh::http_response_writer_ptr&& writer, std::unique_ptr<std::istream>&& st) :
     writer(std::move(writer)),
-    streambuf(std::move(streambuf)),
-    src(std::move(src)) { }
+    st(std::move(st)) { }
 
     void send() {
         asio::error_code ec{};
@@ -109,7 +105,8 @@ public:
     void handle_write(const asio::error_code& ec, size_t /* bytes_written */) {
         std::lock_guard<std::mutex> lock{mutex};
         if (!ec) {
-            size_t len = staticlib::utils::read_all(*streambuf.get(), buf.data(), buf.size());
+            auto src = si::streambuf_source(st->rdbuf());
+            size_t len = si::read_all(src, buf.data(), buf.size());
             if (len > 0) {
                 writer->clear();
                 writer->write_no_copy(buf.data(), len);
@@ -122,7 +119,7 @@ public:
             }
         } else {
             // make sure it will get closed
-            writer->get_connection()->set_lifecycle(pion::tcp::connection::LIFECYCLE_CLOSE);
+            writer->get_connection()->set_lifecycle(sh::tcp_connection::LIFECYCLE_CLOSE);
         }
     }
 };
@@ -133,9 +130,8 @@ ZipResource::ZipResource(const std::string& file_path, const std::string& url_pr
 file_path(file_path),
 url_prefix(url_prefix) { }
 
-void ZipResource::handle(ph::request_ptr& req, pt::connection_ptr& conn) {
-    auto finfun = std::bind(&pt::connection::finish, conn);
-    auto writer = ph::response_writer::create(conn, *req, finfun);
+void ZipResource::handle(sh::http_request_ptr& req, sh::tcp_connection_ptr& conn) {
+    auto writer = sh::http_response_writer::create(conn, req);
     
     auto path = detail::extract_path(req->get_resource(), url_prefix);
 
@@ -158,9 +154,8 @@ void ZipResource::handle(ph::request_ptr& req, pt::connection_ptr& conn) {
     }
 
     // prepare input stream for sender ensuring lifetime for open zip entry
-    std::unique_ptr<detail::UnzipEntry> src{new detail::UnzipEntry{std::move(file)}};
-    std::unique_ptr<std::streambuf> buf{new su::unbuffered_source<detail::UnzipEntry>{*src.get()}}; 
-    auto sender = std::make_shared<detail::ResponseStreamSender>(std::move(writer), std::move(buf), std::move(src));
+    auto st = si::make_source_istream_ptr(detail::UnzipEntry(std::move(file)));
+    auto sender = std::make_shared<detail::ResponseStreamSender>(std::move(writer), std::move(st));
     sender->send();
 }
 

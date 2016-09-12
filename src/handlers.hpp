@@ -28,7 +28,7 @@
 #include <stdexcept>
 #include <jvmti.h>
 
-#include "staticlib/utils/tracemsg.hpp"
+#include "staticlib/config/tracemsg.hpp"
 
 // handler functions
 

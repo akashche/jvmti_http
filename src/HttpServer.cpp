@@ -26,11 +26,8 @@
 #include <cstdlib>
 #include <functional>
 
-#include "pion/tcp/connection.hpp"
-#include "pion/http/request.hpp"
-#include "pion/http/response_writer.hpp"
-
-#include "staticlib/utils/tracemsg.hpp"
+#include "staticlib/config.hpp"
+#include "staticlib/httpserver.hpp"
 #include "staticlib/containers/blocking_queue.hpp"
 
 #include "JvmtiHttpException.hpp"
@@ -38,7 +35,7 @@
 
 namespace jvmti_http {
 
-namespace ph = pion::http;
+namespace sh = staticlib::httpserver;
 
 const uint32_t NUMBER_OF_ASIO_THREADS = 1;
 const uint32_t QUEUE_MAX_SIZE = 1 << 20;
@@ -51,18 +48,17 @@ queue(1 << 10),
 ja(ja),
 // todo: fixme        
 webapp_resource(webapp_zip_path, WEBAPP_PATH) {
-    auto handler = [this](ph::request_ptr& req, pion::tcp::connection_ptr& conn) {
+    auto handler = [this](sh::http_request_ptr& req, sh::tcp_connection_ptr& conn) {
         // pion specific response writer creation
-        auto finfun = std::bind(&pion::tcp::connection::finish, conn);
-        auto writer = ph::response_writer::create(conn, *req, finfun);
+        auto writer = sh::http_response_writer::create(conn, req);
         // reroute to worker
         this->queue.emplace(std::move(writer), req->get_resource().substr(HANDLERS_PATH.length()));
     };
     auto webapp_handler = std::bind(&ZipResource::handle, this->webapp_resource,
             std::placeholders::_1, std::placeholders::_2);
     try {
-        server.add_method_specific_resource("GET", HANDLERS_PATH, handler);
-        server.add_method_specific_resource("GET", WEBAPP_PATH, webapp_handler);
+        server.add_handler("GET", HANDLERS_PATH, handler);
+        server.add_handler("GET", WEBAPP_PATH, webapp_handler);
         server.start();
         running.test_and_set();
     } catch (const std::exception& e) {

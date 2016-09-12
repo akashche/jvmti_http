@@ -24,8 +24,8 @@
 #ifndef JVMTI_HTTP_ZIPRESOURCE_HPP
 #define	JVMTI_HTTP_ZIPRESOURCE_HPP
 
-#include "pion/tcp/connection.hpp"
-#include "pion/http/request.hpp"
+#include "staticlib/httpserver/tcp_connection.hpp"
+#include "staticlib/httpserver/http_request.hpp"
 
 namespace jvmti_http {
 
@@ -36,7 +36,7 @@ class ZipResource {
 public:
     ZipResource(const std::string& file_path, const std::string& url_prefix);
     
-    void handle(pion::http::request_ptr& req, pion::tcp::connection_ptr& conn);
+    void handle(staticlib::httpserver::http_request_ptr& req, staticlib::httpserver::tcp_connection_ptr& conn);
 
 };
 
