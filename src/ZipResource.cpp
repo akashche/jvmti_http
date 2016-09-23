@@ -26,6 +26,7 @@
 #include <istream>
 #include <array>
 #include <functional>
+#include <vector>
 
 #include "staticlib/config.hpp"
 #include "staticlib/httpserver.hpp"
@@ -44,20 +45,44 @@ namespace si = staticlib::io;
 namespace sz = staticlib::unzip;
 namespace su = staticlib::utils;
 
-namespace detail {
+namespace { // anonymous
 
+const std::vector<std::pair<std::string, std::string>> MIME_TYPES = {
+    { "txt", "text/plain" },
+    { "js", "text/javascript" },
+    { "css", "text/css" },
+    { "html", "text/html" },
+    { "png", "image/png" },
+    { "jpg", "image/jpeg" },
+    { "svg", "image/svg+xml" }
+};
+
+void set_resp_headers(const std::string& url_path, sh::http_response& resp) {
+    std::string ct{"application/octet-stream"};
+    for (const auto& pa : MIME_TYPES) {
+        if (su::ends_with(url_path, pa.first)) {
+            ct = pa.second;
+            break;
+        }
+    }
+    resp.change_header("Content-Type", ct);
+    // todo: make configurable
+//    int32_t seconds = 86400;
+    int32_t seconds = 0;
+    resp.change_header("Cache-Control", "max-age=" + sc::to_string(seconds) + ", public");
+}
 
 class ResponseStreamSender : public std::enable_shared_from_this<ResponseStreamSender> {
-    sh::http_response_writer_ptr writer;
-    std::unique_ptr<std::istream> st;
+    staticlib::httpserver::http_response_writer_ptr writer;
+    std::unique_ptr<std::istream> stream;
 
     std::array<char, 4096> buf;
 
 public:
-
-    ResponseStreamSender(sh::http_response_writer_ptr&& writer, std::unique_ptr<std::istream>&& st) :
+    ResponseStreamSender(staticlib::httpserver::http_response_writer_ptr writer, 
+            std::unique_ptr<std::istream>&& stream) :
     writer(std::move(writer)),
-    st(std::move(st)) { }
+    stream(std::move(stream)) { }
 
     void send() {
         asio::error_code ec{};
@@ -66,15 +91,18 @@ public:
 
     void handle_write(const asio::error_code& ec, size_t /* bytes_written */) {
         if (!ec) {
-            auto src = si::streambuf_source(st->rdbuf());
+            auto src = si::streambuf_source(stream->rdbuf());
             size_t len = si::read_all(src, buf.data(), buf.size());
+            writer->clear();
             if (len > 0) {
-                writer->clear();
-                writer->write_no_copy(buf.data(), len);
-            }
-            if (buf.size() == len) {
-                writer->send_chunk(std::bind(&ResponseStreamSender::handle_write, shared_from_this(),
-                        std::placeholders::_1, std::placeholders::_2));
+                if (buf.size() == len) {
+                    writer->write_no_copy(buf.data(), len);
+                    writer->send_chunk(std::bind(&ResponseStreamSender::handle_write, shared_from_this(),
+                            std::placeholders::_1, std::placeholders::_2));
+                } else {
+                    writer->write(buf.data(), len);
+                    writer->send_final_chunk();
+                }
             } else {
                 writer->send_final_chunk();
             }
@@ -98,9 +126,8 @@ void ZipResource::handle(sh::http_request_ptr& req, sh::tcp_connection_ptr& conn
     sz::FileEntry en = idx->find_zip_entry(url_path);
     if (!en.is_empty()) {
         auto stream_ptr = sz::open_zip_entry(*idx, url_path);
-        auto sender = std::make_shared<detail::ResponseStreamSender>(std::move(resp), std::move(stream_ptr));
-        // todo
-        //            set_resp_headers(url_path, resp->get_response());
+        set_resp_headers(url_path, resp->get_response());
+        auto sender = std::make_shared<ResponseStreamSender>(std::move(resp), std::move(stream_ptr));
         sender->send();
     } else {
         resp->get_response().set_status_code(sh::http_request::RESPONSE_CODE_NOT_FOUND);
@@ -111,18 +138,5 @@ void ZipResource::handle(sh::http_request_ptr& req, sh::tcp_connection_ptr& conn
         resp->send();
     }
 }
-
-//    void set_resp_headers(const std::string& url_path, sh::http_response& resp) {
-//        std::string ct{"application/octet-stream"};
-//        for (const auto& mi : conf->mimeTypes) {
-//            if (su::ends_with(url_path, mi.extension)) {
-//                ct = mi.mime;
-//                break;
-//            }
-//        }
-//        resp.change_header("Content-Type", ct);
-//        // set caching
-//        resp.change_header("Cache-Control", "max-age=" + sc::to_string(conf->cacheMaxAgeSeconds) + ", public");
-//    }
 
 } // namespace
