@@ -102,7 +102,7 @@ void add_jvmti_callback(jvmtiEnv* jvmti) {
 size_t check_opts(const std::string& options) {
     auto pos = options.find(',');
     if (std::string::npos == pos || pos + 1 >= options.length()) {
-        throw jvmti_http::JvmtiHttpException(TRACEMSG(std::string{} + 
+        throw jvmti_http::JvmtiHttpException(TRACEMSG(
             "Invalid agent options, must be =<port>,<webapp_path>"));
     }
     return pos;

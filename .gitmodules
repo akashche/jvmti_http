@@ -31,3 +31,6 @@
 [submodule "deps/staticlib_unzip"]
 	path = deps/staticlib_unzip
 	url = https://github.com/staticlibs/staticlib_unzip.git
+[submodule "deps/external_openssl"]
+	path = deps/external_openssl
+	url = https://staticlibs@github.com/staticlibs/external_openssl.git

@@ -15,7 +15,22 @@
 cmake_minimum_required ( VERSION 2.8.12 )
 
 # toolchain setup
-set ( STATICLIB_TOOLCHAIN linux_amd64_gcc CACHE STRING "toolchain triplet" )
+if ( NOT DEFINED STATICLIB_TOOLCHAIN )
+    if ( WIN32 )
+        if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+            set ( STATICLIB_TOOLCHAIN "windows_amd64_msvc" )
+        else ( )
+            set ( STATICLIB_TOOLCHAIN "windows_i386_msvc" )
+        endif ( )
+    elseif ( APPLE )
+        set ( STATICLIB_TOOLCHAIN "macosx_amd64_clang" )
+    elseif ( UNIX )
+        set ( STATICLIB_TOOLCHAIN "linux_amd64_gcc" )
+    else ( )
+        message ( FATAL_ERROR "Cannot determine toolchain to use, please specify [STATICLIB_TOOLCHAIN]" )
+    endif ( )
+endif ( )
+message ( STATUS "Using toolchain: [${STATICLIB_TOOLCHAIN}]" )
 set ( STATICLIB_CMAKE ${CMAKE_CURRENT_LIST_DIR}/cmake CACHE INTERNAL "" )    
 set ( CMAKE_TOOLCHAIN_FILE ${STATICLIB_CMAKE}/toolchains/${STATICLIB_TOOLCHAIN}.cmake CACHE INTERNAL "" )
 
@@ -26,11 +41,14 @@ set ( ${PROJECT_NAME}_STATICLIB_VERSION 0.1 )
 include ( ${STATICLIB_CMAKE}/staticlibs_common.cmake )
 
 # options
-set ( JAVA_HOME "/usr/lib/jvm/java-openjdk" CACHE STRING "JDK directory" )
 set ( staticlib_httpserver_DISABLE_LOGGING ON CACHE BOOL "Disable logging support in httpserver" )
 set ( staticlib_httpserver_USE_OPENSSL ON CACHE BOOL "Use OpenSSL lib for https" )
 
 # dependencies
+if ( NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" ) # system dependencies implied on Linux
+    staticlib_add_subdirectory ( ${CMAKE_CURRENT_LIST_DIR}/deps/external_zlib )
+    staticlib_add_subdirectory ( ${CMAKE_CURRENT_LIST_DIR}/deps/external_openssl )
+endif ( )
 staticlib_add_subdirectory ( ${CMAKE_CURRENT_LIST_DIR}/deps/staticlib_config )
 staticlib_add_subdirectory ( ${CMAKE_CURRENT_LIST_DIR}/deps/staticlib_io )
 staticlib_add_subdirectory ( ${CMAKE_CURRENT_LIST_DIR}/deps/staticlib_endian )
@@ -60,7 +78,8 @@ target_include_directories ( ${PROJECT_NAME} BEFORE PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src 
         ${${PROJECT_NAME}_DEPS_PC_INCLUDE_DIRS}
         ${JAVA_HOME}/include
-        ${JAVA_HOME}/include/linux )
+        ${JAVA_HOME}/include/linux
+        ${JAVA_HOME}/include/windows )
 target_link_libraries ( ${PROJECT_NAME} 
         ${${PROJECT_NAME}_DEPS_PC_LIBRARIES} )
 target_compile_options ( ${PROJECT_NAME} PRIVATE 

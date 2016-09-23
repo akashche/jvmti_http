@@ -50,14 +50,14 @@ std::string JvmtiAccessor::process_query(jvmtiEnv* jvmti, JNIEnv* jni, const std
             try {
                 return tu->second(jvmti, jni, input);
             } catch (const std::exception& e) {
-                throw JvmtiHttpException(TRACEMSG(std::string(e.what()) + "\n" +
+                throw JvmtiHttpException(TRACEMSG(e.what() + "\n" +
                         "JvmtiHttpException: handler throw exception for query: [" + query + "]"));
             }
         } else {
-            throw JvmtiHttpException(TRACEMSG(std::string("Invalid handler name: [") + hname + "]"));
+            throw JvmtiHttpException(TRACEMSG("Invalid handler name: [" + hname + "]"));
         }
     } else {
-        throw JvmtiHttpException(TRACEMSG(std::string("Invalid query: [") + query + "]"));
+        throw JvmtiHttpException(TRACEMSG("Invalid query: [" + query + "]"));
     }
 }
 

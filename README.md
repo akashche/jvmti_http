@@ -22,18 +22,17 @@ function
 How to build and run
 --------------------
 
-Build and run steps were tested only on Fedora 22, but they also should work (with minor changes) 
-on any other platform supported by OpenJDK:
+Build and run steps tested on Windows and Linux and should work (with minor changes) 
+on other platforms supported by OpenJDK.
 
-    git clone https://github.com/akashche/jvmti_http.git
+    git clone --recursive https://github.com/akashche/jvmti_http.git
     cd jvmti_http
-    git submodule update --init --recursive
     mkdir build
     cd build
-    cmake ..
-    make
-    make webapp
-    javac -d . ../test/App.java && java -agentpath:`pwd`/bin/libjvmti_http.so=8443,../webapp/build/ App
+    cmake .. -DJAVA_HOME=<path/to/jdk>
+    cmake --build .
+    cmake --build . --target webapp
+    javac -d . ../test/App.java && java -agentpath:bin/libjvmti_http.so=8443,bin App
 
 HTTP server will be started on the specified port (8443 in this example). In this example
 server uses self-signed HTTPS certificate. Example can be easily extended to use different server certificate
@@ -79,6 +78,11 @@ This project is released under the [Apache License 2.0](http://www.apache.org/li
 
 Changelog
 ---------
+
+**2016-09-23**
+
+ * dependencies cleanup
+ * windows support
 
 **2015-08-04**
 

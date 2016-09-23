@@ -53,7 +53,6 @@ webapp_resource(webapp_zip_path, WEBAPP_URL) {
 
     
     auto handler = [this](sh::http_request_ptr& req, sh::tcp_connection_ptr& conn) {
-        // pion specific response writer creation
         auto writer = sh::http_response_writer::create(conn, req);
         // reroute to worker
         this->queue.emplace(std::move(writer), req->get_resource().substr(HANDLERS_URL.length()));
