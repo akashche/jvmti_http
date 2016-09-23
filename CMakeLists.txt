@@ -68,5 +68,11 @@ target_compile_options ( ${PROJECT_NAME} PRIVATE
 
 # webapp target
 add_custom_target( webapp
-        COMMAND ${CMAKE_MAKE_PROGRAM} -f ${CMAKE_CURRENT_LIST_DIR}/webapp/Makefile
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/webapp )
+        COMMAND ${CMAKE_COMMAND} -E remove_directory webapp
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/webapp/public_html webapp
+        COMMAND ${CMAKE_COMMAND} -E remove_directory webapp/lib/dojo/.git
+        COMMAND ${CMAKE_COMMAND} -E remove_directory webapp/lib/dojox/.git
+        COMMAND cd webapp && zip -qr webapp.zip *
+        COMMAND ${CMAKE_COMMAND} -E rename webapp/webapp.zip bin/webapp.zip
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/webapp/certificates/cert.pem bin/cert.pem
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR} )
