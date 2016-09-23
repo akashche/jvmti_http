@@ -17,10 +17,10 @@ cmake_minimum_required ( VERSION 2.8.12 )
 # toolchain setup
 if ( NOT DEFINED STATICLIB_TOOLCHAIN )
     if ( WIN32 )
-        if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-            set ( STATICLIB_TOOLCHAIN "windows_amd64_msvc" )
-        else ( )
+        if ( CMAKE_SIZEOF_VOID_P EQUAL 4 )
             set ( STATICLIB_TOOLCHAIN "windows_i386_msvc" )
+        else ( )
+            set ( STATICLIB_TOOLCHAIN "windows_amd64_msvc" )
         endif ( )
     elseif ( APPLE )
         set ( STATICLIB_TOOLCHAIN "macosx_amd64_clang" )
@@ -41,6 +41,7 @@ set ( ${PROJECT_NAME}_STATICLIB_VERSION 0.1 )
 include ( ${STATICLIB_CMAKE}/staticlibs_common.cmake )
 
 # options
+set ( JAVA_HOME "UNSPECIFIED" CACHE STRING "Path to JDK directory" )
 set ( staticlib_httpserver_DISABLE_LOGGING ON CACHE BOOL "Disable logging support in httpserver" )
 set ( staticlib_httpserver_USE_OPENSSL ON CACHE BOOL "Use OpenSSL lib for https" )
 
@@ -79,7 +80,7 @@ target_include_directories ( ${PROJECT_NAME} BEFORE PRIVATE
         ${${PROJECT_NAME}_DEPS_PC_INCLUDE_DIRS}
         ${JAVA_HOME}/include
         ${JAVA_HOME}/include/linux
-        ${JAVA_HOME}/include/windows )
+        ${JAVA_HOME}/include/win32 )
 target_link_libraries ( ${PROJECT_NAME} 
         ${${PROJECT_NAME}_DEPS_PC_LIBRARIES} )
 target_compile_options ( ${PROJECT_NAME} PRIVATE 
@@ -89,9 +90,7 @@ target_compile_options ( ${PROJECT_NAME} PRIVATE
 add_custom_target( webapp
         COMMAND ${CMAKE_COMMAND} -E remove_directory webapp
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/webapp/public_html webapp
-        COMMAND ${CMAKE_COMMAND} -E remove_directory webapp/lib/dojo/.git
-        COMMAND ${CMAKE_COMMAND} -E remove_directory webapp/lib/dojox/.git
         COMMAND cd webapp && zip -qr webapp.zip *
-        COMMAND ${CMAKE_COMMAND} -E rename webapp/webapp.zip bin/webapp.zip
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/webapp/certificates/cert.pem bin/cert.pem
+        COMMAND ${CMAKE_COMMAND} -E rename ${PROJECT_BINARY_DIR}/webapp/webapp.zip ${PROJECT_BINARY_DIR}/bin/webapp.zip
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/webapp/certificates/cert.pem ${PROJECT_BINARY_DIR}/bin/cert.pem
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR} )

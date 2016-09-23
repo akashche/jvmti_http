@@ -82,7 +82,11 @@ class HttpServer {
     staticlib::containers::blocking_queue<detail::Query> queue;    
     staticlib::httpserver::http_server server;
     ZipResource webapp_resource;
+#ifdef STATICLIB_WINDOWS
+    std::atomic_flag running;
+#else
     std::atomic_flag running = ATOMIC_FLAG_INIT;
+#endif
     
 public:
     HttpServer(const HttpServer&) = delete;

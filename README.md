@@ -23,7 +23,16 @@ How to build and run
 --------------------
 
 Build and run steps tested on Windows and Linux and should work (with minor changes) 
-on other platforms supported by OpenJDK.
+on other platforms supported by OpenJDK. 
+
+On Windows the commands below should be run from the Visual Studio 2013 Express `x86_64` development command prompt, additional argument should be specified for `cmake ..` - `-G "Visual Studio 12 2013 Win64"`, and the following tools must be available in `PATH`:
+
+ - [CMake](https://cmake.org/) as a build system
+ - [pkg-config](https://github.com/staticlibs/tools_windows_pkgconfig) for dependency management
+ - [perl](https://github.com/staticlibs/tools_windows_perl) for OpenSSL build
+ - [zip](https://github.com/ojdkbuild/tools_zip) for webapp bundling
+
+Build and run commands:
 
     git clone --recursive https://github.com/akashche/jvmti_http.git
     cd jvmti_http
@@ -32,7 +41,9 @@ on other platforms supported by OpenJDK.
     cmake .. -DJAVA_HOME=<path/to/jdk>
     cmake --build .
     cmake --build . --target webapp
-    javac -d . ../test/App.java && java -agentpath:bin/libjvmti_http.so=8443,bin App
+    javac -d . ../test/App.java && java -agentpath:bin/<shared_library_name>=8443,bin App
+
+`shared_library_name` should be `libjvmti_http.so` on Linux and `jvmti_http.dll` on Windows.
 
 HTTP server will be started on the specified port (8443 in this example). In this example
 server uses self-signed HTTPS certificate. Example can be easily extended to use different server certificate

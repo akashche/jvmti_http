@@ -50,8 +50,10 @@ ja(ja),
 queue(1 << 10),
 server(2, port, asio::ip::address_v4::any(), cert_path),
 webapp_resource(webapp_zip_path, WEBAPP_URL) {
-
-    
+#ifdef STATICLIB_WINDOWS
+    // http://stackoverflow.com/a/19658185/314015
+    running.clear();
+#endif    
     auto handler = [this](sh::http_request_ptr& req, sh::tcp_connection_ptr& conn) {
         auto writer = sh::http_response_writer::create(conn, req);
         // reroute to worker
@@ -79,8 +81,10 @@ void JNICALL HttpServer::jvmti_callback(jvmtiEnv* jvmti, JNIEnv* jni, void* user
 void HttpServer::shutdown() {
     server.stop(false);
     running.clear();
-    // todo: investigate why blocks
-//    queue.unblock();
+    // todo: investigate why blocks on linux
+#ifdef STATICLIB_WINDOWS
+    queue.unblock();
+#endif
 }
 
 void HttpServer::read_from_queue(jvmtiEnv* jvmti, JNIEnv* jni) {
